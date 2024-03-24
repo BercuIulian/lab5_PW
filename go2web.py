@@ -66,6 +66,8 @@ def main():
         print(make_http_request(args.url))
     elif args.search_term:
         print(search(args.search_term))
+    else:
+        parser.print_help(sys.stderr)
 
 if __name__ == "__main__":
     main()
