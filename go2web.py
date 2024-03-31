@@ -2,23 +2,30 @@ import sys
 import argparse
 import urllib.parse
 import requests
+import requests_cache
 from bs4 import BeautifulSoup
 
 # Google Custom Search API credentials
 API_KEY = 'AIzaSyDGx6E7DPqSozqRRFEeDn9FQ4akYXEVA7E'
 SEARCH_ENGINE_ID = '2028de92bd5ca4bc7'
 
-# Function to make HTTP GET request
-def make_http_request(url):
-    try:
-        # Make HTTP GET request
-        response = requests.get(url)
+# Enable cache with a timeout of 3600 seconds (1 hour)
+requests_cache.install_cache(cache_name='web_cache', expire_after=3600)
 
+# Function to make HTTP GET request
+def make_http_request(url, accept='text/html'):
+    try:
+        headers = {'Accept': accept}
+        # Make HTTP GET request with specified Accept header
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()  # Raise an exception for 4xx or 5xx status codes
+        
+        # Disable cache after request
+        requests_cache.clear()
+        
         # Check for redirection
         if response.history:
             print(f"Request redirected to: {response.url}")
-
-        response.raise_for_status()  # Raise an exception for 4xx or 5xx status codes
 
         # Parse HTML response and extract text
         soup = BeautifulSoup(response.content, 'html.parser')
@@ -28,7 +35,6 @@ def make_http_request(url):
     except requests.exceptions.RequestException as e:
         return f"Error: {e}"
 
-   
 # Function to search using Google Custom Search API
 def search(term):
     try:
@@ -50,7 +56,6 @@ def search(term):
         return '\n'.join(search_results)
     except requests.exceptions.RequestException as e:
         return f"Error: {e}"
-
 
 def main():
     parser = argparse.ArgumentParser(description="Web Client CLI")
